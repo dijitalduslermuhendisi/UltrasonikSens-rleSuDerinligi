@@ -1,0 +1,54 @@
+#include <LiquidCrystal_I2C.h> // I2C LCD kütüphanesini ekleyin
+
+const int trigPin = 9; // Tetikleyici pin
+const int echoPin = 10; // Yankı pini
+const int lcdAddr = 0x27; // I2C adres (LCD ekranınıza göre değiştirin)
+
+float depoDerinligi = 7.72; // Depo derinliği (cm)
+LiquidCrystal_I2C lcd(lcdAddr, 16, 2); // I2C LCD nesnesi oluşturun
+
+void setup() {
+  Serial.begin(9600); // Seri haberleşmeyi başlatın
+  lcd.init(); // LCD ekranı başlatın
+  lcd.backlight(); // Arka ışığı açın
+
+  pinMode(trigPin, OUTPUT); // Tetikleyici pini çıkış olarak ayarlayın
+  pinMode(echoPin, INPUT); // Yankı pini girişi olarak ayarlayın
+}
+
+void loop() {
+  long duration; // Ses dalgasının gidiş-dönüş süresi
+  float distance; // Nesneye olan mesafe
+  float dolulukOrani; // Depo doluluk oranı
+
+  // Ses dalgasını tetikleyin
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, LOW);
+
+  // Yankı sinyali gelmesini bekleyin
+  duration = pulseIn(echoPin, HIGH);
+
+  // Mesafeyi hesaplayın
+  distance = duration * 0.034 / 2; // Hız (cm/s) * gidiş-dönüş süresi (s) / 2
+
+  // Doluluk oranını hesaplayın
+  dolulukOrani = (depoDerinligi - distance) / depoDerinligi * 100;
+
+  // Mesafeyi ve doluluk oranını LCD ekrana yazdırın
+  lcd.clear();
+  lcd.print("Mesafe: ");
+  lcd.print(distance);
+  lcd.print(" cm");
+  lcd.setCursor(0, 1);
+  lcd.print("% Doluluk: ");
+  lcd.print(dolulukOrani);
+  lcd.print("%");
+
+  // Mesafeyi seri monitöre yazdırın
+  Serial.print("Mesafe: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  delay(100); // Bir sonraki ölçüme kadar 100 ms bekleyin
+}
